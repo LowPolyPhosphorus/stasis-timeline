@@ -1,1 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#C4B9A2" />
+  <title>Stasis — Photo Timeline</title>
+  <meta name="description" content="A photo timeline from Stasis, the High School Hardware Hackathon in Austin, TX — May 15–18, 2025." />
+  <link rel="icon" href="/assets/favicon.ico" sizes="48x48" type="image/x-icon" />
+  <link rel="icon" href="/assets/favicon.svg" />
+  <link rel="stylesheet" href="./css/timeline.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-left">
+        <img src="./assets/stasis-logo.png" alt="Stasis" class="header-logo" />
+        <span class="header-title">PHOTO TIMELINE — <span>MAY 15–18 2025</span></span>
+      </div>
+      <span class="header-barcode" aria-hidden="true">STASIS2025</span>
+    </header>
 
+    <div class="timeline-wrapper">
+      <canvas id="timeline-canvas"></canvas>
+
+      <div class="controls">
+        <button id="zoom-out" title="Zoom out">−</button>
+        <span id="zoom-label">DAYS</span>
+        <button id="zoom-in" title="Zoom in">+</button>
+      </div>
+
+      <p class="hint">DRAG TO PAN · SCROLL OR +/− TO ZOOM · CLICK PHOTO TO EXPAND</p>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="hidden" role="dialog" aria-modal="true">
+    <div class="lightbox-controls">
+      <button id="lightbox-prev" aria-label="Previous photo">←</button>
+      <button id="lightbox-close" aria-label="Close">✕</button>
+      <button id="lightbox-next" aria-label="Next photo">→</button>
+    </div>
+    <img id="lightbox-img" alt="Hackathon photo" />
+    <p id="lightbox-caption"></p>
+  </div>
+
+  <script type="module" src="./js/timeline.js"></script>
+  <script type="module" src="./js/lightbox.js"></script>
+</body>
+</html>

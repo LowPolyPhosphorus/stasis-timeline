@@ -119,8 +119,6 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
 
   photos.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-  console.log(`Found ${photos.length} total photos.`);
-
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
   fs.writeFileSync(OUT_PATH, JSON.stringify(photos.slice(0, 5), null, 2));
   console.log(`Found ${photos.length} total photos.`);

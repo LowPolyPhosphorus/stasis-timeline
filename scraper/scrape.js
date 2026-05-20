@@ -19,30 +19,8 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
 
   const page = await browser.newPage();
   await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
   );
-
-  // Intercept network requests to capture photo URLs and timestamps
-  const photoMap = new Map();
-
-  await page.setRequestInterception(true);
-  page.on("request", (req) => req.continue());
-
-  page.on("response", async (res) => {
-    const url = res.url();
-    if (!url.includes("google.com")) return;
-    try {
-      const ct = res.headers()["content-type"] || "";
-      if (!ct.includes("json") && !ct.includes("javascript")) return;
-      const text = await res.text();
-      // Find all lh3 URLs with timestamps nearby
-      const matches = [...text.matchAll(/https:\\\/\\\/lh3\.googleusercontent\.com\\\/([^"\\]+)/g)];
-      matches.forEach((m) => {
-        const rawUrl = "https://lh3.googleusercontent.com/" + m[1].replace(/\\\//g, "/");
-        if (!photoMap.has(rawUrl)) photoMap.set(rawUrl, null);
-      });
-    } catch {}
-  });
 
   console.log("Opening album...");
   await page.goto(ALBUM_URL, { waitUntil: "networkidle2", timeout: 60000 });
@@ -52,113 +30,101 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
   let last = 0;
   for (let i = 0; i < 40; i++) {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1500));
     const h = await page.evaluate(() => document.body.scrollHeight);
     if (h === last) break;
     last = h;
   }
 
-  // DEBUG — save screenshot and HTML to inspect what Google is showing
-  await page.screenshot({ path: path.join(__dirname, "../data/debug.png"), fullPage: false });
-  const html = await page.content();
-  fs.writeFileSync(path.join(__dirname, "../data/debug.html"), html);
-  console.log("Debug files written.");
+  console.log("Extracting...");
+  const results = await page.evaluate(() => {
+    const photos = [];
+    const seen = new Set();
 
-  // Extract from rendered DOM — Google renders img tags with data attributes
-  console.log("Extracting from DOM...");
-  const domPhotos = await page.evaluate(() => {
-    const results = [];
-    // Try all img elements with lh3 src
-    document.querySelectorAll("img").forEach((img) => {
-      const src = img.src || img.getAttribute("src") || "";
-      if (!src.includes("lh3.googleusercontent.com")) return;
-      // Look for timestamp in closest ancestor's data attributes
-      let ts = null;
+    // Pull all img srcs from the page
+    document.querySelectorAll("img[src*='lh3.googleusercontent.com']").forEach((img) => {
+      const src = img.src;
+      const base = src.split("=")[0];
+      if (seen.has(base)) return;
+      seen.add(base);
+
+      // Walk up DOM tree looking for a data-date, aria-label, or title with a date
+      let dateStr = null;
       let el = img;
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 10; i++) {
         el = el.parentElement;
         if (!el) break;
-        const attrs = el.getAttributeNames();
-        for (const a of attrs) {
-          const v = el.getAttribute(a);
-          if (v && /^\d{13}$/.test(v)) { ts = parseInt(v); break; }
-        }
-        if (ts) break;
-        // also check aria-label for date strings
+        // Check aria-label like "Photo - May 16, 2025"
         const label = el.getAttribute("aria-label") || "";
-        const dateMatch = label.match(/(\w+ \d+, \d{4})/);
-        if (dateMatch) {
-          ts = new Date(dateMatch[1]).getTime();
-          break;
-        }
+        const titleAttr = el.getAttribute("title") || "";
+        const text = label + " " + titleAttr;
+        const m = text.match(/([A-Z][a-z]+ \d{1,2},? \d{4})/);
+        if (m) { dateStr = m[1]; break; }
       }
-      results.push({ src, ts });
+
+      photos.push({ base, dateStr });
     });
 
-    // Also grab from page source data blobs
-    const allText = document.documentElement.innerHTML;
-    const tsMatches = [...allText.matchAll(/"(\d{13})"/g)].map(m => parseInt(m[1]));
-    const urlMatches = [...allText.matchAll(/https:\/\/lh3\.googleusercontent\.com\/[^\s"'<>]+/g)].map(m => m[0]);
+    // Also grab all text content looking for timestamps
+    const html = document.documentElement.innerHTML;
 
-    return { domResults: results, tsMatches, urlMatches };
+    // Google embeds photo metadata as JSON arrays in script tags
+    // Pattern: ["URL",...,TIMESTAMP_MS,...]
+    const photoDataPattern = /\["(https:\\\/\\\/lh3\.googleusercontent\.com\\\/[^"]+)"[^\]]*?(\d{13})/g;
+    let m;
+    while ((m = photoDataPattern.exec(html)) !== null) {
+      const base = m[1].replace(/\\\//g, "/").split("=")[0];
+      const ts = parseInt(m[2]);
+      if (!seen.has(base)) {
+        seen.add(base);
+        photos.push({ base, ts });
+      }
+    }
+
+    return photos;
   });
 
   await browser.close();
 
-  // Build photo list from DOM results first
   const photos = [];
-  const seen = new Set();
+  results.forEach(({ base, dateStr, ts }) => {
+    let date = null;
+    if (ts) {
+      date = new Date(ts);
+    } else if (dateStr) {
+      date = new Date(dateStr);
+    }
 
-  // Try DOM imgs with timestamps
-  domPhotos.domResults.forEach(({ src, ts }) => {
-    if (seen.has(src)) return;
-    seen.add(src);
-    const baseUrl = src.split("=")[0];
-    const date = ts ? new Date(ts) : null;
-    if (!date) return;
-    const d = date.getDate(), mo = date.getMonth(), yr = date.getFullYear();
+    if (!date || isNaN(date.getTime())) return;
+
+    const d = date.getDate();
+    const mo = date.getMonth(); // 4 = May
+    const yr = date.getFullYear();
+    // Include May 15–18 2025 only
     if (yr !== 2025 || mo !== 4 || d < 15 || d > 18) return;
+
     photos.push({
-      url: baseUrl + "=w1600",
-      thumb: baseUrl + "=w400",
+      url: base + "=w1600",
+      thumb: base + "=w400",
       timestamp: date.toISOString(),
-      day: d, hour: date.getHours(), minute: date.getMinutes(),
+      day: d,
+      hour: date.getHours(),
+      minute: date.getMinutes(),
     });
   });
 
-  // Fallback: pair URLs with nearby timestamps from page source
-  if (photos.length === 0) {
-    console.log("DOM method yielded nothing, trying URL+timestamp pairing...");
-    const urls = [...new Set(domPhotos.urlMatches)].filter(u => u.includes("lh3.googleusercontent.com"));
-    const tsList = domPhotos.tsMatches.filter(ts => {
-      const d = new Date(ts);
-      return d.getFullYear() === 2025 && d.getMonth() === 4 && d.getDate() >= 15 && d.getDate() <= 18;
-    });
-
-    urls.forEach((url, i) => {
-      const ts = tsList[i];
-      if (!ts) return;
-      const date = new Date(ts);
-      const baseUrl = url.split("=")[0];
-      if (seen.has(baseUrl)) return;
-      seen.add(baseUrl);
-      photos.push({
-        url: baseUrl + "=w1600",
-        thumb: baseUrl + "=w400",
-        timestamp: date.toISOString(),
-        day: date.getDate(), hour: date.getHours(), minute: date.getMinutes(),
-      });
-    });
-  }
-
   photos.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+  console.log(`Found ${photos.length} photos in range.`);
+
   if (photos.length === 0) {
-    console.error("Still no photos found. Google's structure may need manual inspection.");
+    // Write debug info instead of failing hard
+    fs.writeFileSync(OUT_PATH.replace("photos.json", "raw-results.json"), JSON.stringify(results.slice(0, 20), null, 2));
+    console.error("No photos in May 15-18 range. raw-results.json written for inspection.");
     process.exit(1);
   }
 
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
   fs.writeFileSync(OUT_PATH, JSON.stringify(photos, null, 2));
-  console.log(`Done. ${photos.length} photos written to data/photos.json`);
+  console.log(`Done. ${photos.length} photos written.`);
 })();

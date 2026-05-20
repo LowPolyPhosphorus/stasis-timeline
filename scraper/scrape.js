@@ -97,17 +97,12 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
 
     if (!date || isNaN(date.getTime())) return;
 
-    const d = date.getDate();
-    const mo = date.getMonth(); // 4 = May
-    const yr = date.getFullYear();
-    // Include May 15–18 2025 only
-    if (yr !== 2025 || mo !== 4 || d < 15 || d > 18) return;
-
+    // no filter — dump everything for inspection
     photos.push({
       url: base + "=w1600",
       thumb: base + "=w400",
       timestamp: date.toISOString(),
-      day: d,
+      day: date.getDate(),
       hour: date.getHours(),
       minute: date.getMinutes(),
     });
@@ -115,16 +110,10 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
 
   photos.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-  console.log(`Found ${photos.length} photos in range.`);
-
-  if (photos.length === 0) {
-    // Write debug info instead of failing hard
-    fs.writeFileSync(OUT_PATH.replace("photos.json", "raw-results.json"), JSON.stringify(results.slice(0, 20), null, 2));
-    console.error("No photos in May 15-18 range. raw-results.json written for inspection.");
-    process.exit(1);
-  }
+  console.log(`Found ${photos.length} total photos.`);
 
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-  fs.writeFileSync(OUT_PATH, JSON.stringify(photos, null, 2));
-  console.log(`Done. ${photos.length} photos written.`);
+  fs.writeFileSync(OUT_PATH, JSON.stringify(photos.slice(0, 5), null, 2));
+  console.log(`Found ${photos.length} total photos.`);
+  console.log(`Wrote first 5 to photos.json for inspection.`);
 })();

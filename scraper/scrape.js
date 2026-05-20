@@ -13,11 +13,12 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
 (async () => {
   console.log("Launching browser...");
   const browser = await puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--window-size=1920,1080"],
     headless: "new",
   });
 
   const page = await browser.newPage();
+  await page.setViewport({ width: 1920, height: 1080 });
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36"
   );
@@ -28,9 +29,9 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
   // Scroll to load all photos
   console.log("Scrolling...");
   let last = 0;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 60; i++) {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 2000));
     const h = await page.evaluate(() => document.body.scrollHeight);
     if (h === last) break;
     last = h;

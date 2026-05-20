@@ -8,28 +8,38 @@
   <meta name="description" content="A photo timeline from Stasis, the High School Hardware Hackathon in Austin, TX — May 15–18, 2025." />
   <link rel="icon" href="/assets/favicon.ico" sizes="48x48" type="image/x-icon" />
   <link rel="icon" href="/assets/favicon.svg" />
-  <link rel="stylesheet" href="./css/timeline.css" />
+  <link rel="stylesheet" href="./css/timeline.css?v=2" />
 </head>
 <body>
   <div class="app">
-    <header>
-      <div class="header-left">
-        <img src="./assets/stasis-logo.png" alt="Stasis" class="header-logo" />
-        <span class="header-title">PHOTO TIMELINE — <span>MAY 15–18 2025</span></span>
+    <div class="sidebar">
+      <span class="sidebar-barcode">STASIS2025HACKCLUBAUSTIN</span>
+      <span class="sidebar-barcode">0x003c0055</span>
+    </div>
+
+    <div class="main">
+      <header>
+        <div class="header-left bracket-box">
+          <span class="bracket-tr"></span>
+          <span class="bracket-bl"></span>
+          <img src="./assets/stasis-logo.png" alt="Stasis" class="header-logo" />
+          <span class="header-title">PHOTO TIMELINE — <span>MAY 15–18 2025</span></span>
+        </div>
+      </header>
+
+      <div class="timeline-wrapper">
+        <canvas id="timeline-canvas"></canvas>
+
+        <div class="controls bracket-box">
+          <span class="bracket-tr"></span>
+          <span class="bracket-bl"></span>
+          <button id="zoom-out" title="Zoom out">−</button>
+          <span id="zoom-label">DAYS</span>
+          <button id="zoom-in" title="Zoom in">+</button>
+        </div>
+
+        <p class="hint">DRAG TO PAN · SCROLL OR +/− TO ZOOM · CLICK PHOTO TO EXPAND</p>
       </div>
-      <span class="header-barcode" aria-hidden="true">STASIS2025</span>
-    </header>
-
-    <div class="timeline-wrapper">
-      <canvas id="timeline-canvas"></canvas>
-
-      <div class="controls">
-        <button id="zoom-out" title="Zoom out">−</button>
-        <span id="zoom-label">DAYS</span>
-        <button id="zoom-in" title="Zoom in">+</button>
-      </div>
-
-      <p class="hint">DRAG TO PAN · SCROLL OR +/− TO ZOOM · CLICK PHOTO TO EXPAND</p>
     </div>
   </div>
 
@@ -44,7 +54,7 @@
     <p id="lightbox-caption"></p>
   </div>
 
-  <script type="module" src="./js/timeline.js"></script>
-  <script type="module" src="./js/lightbox.js"></script>
+  <script type="module" src="./js/timeline.js?v=2"></script>
+  <script type="module" src="./js/lightbox.js?v=2"></script>
 </body>
 </html>

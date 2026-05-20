@@ -69,11 +69,11 @@ function render() {
 }
 
 function drawBackground(w, h) {
-  ctx.fillStyle = "#2A2219";
+  ctx.fillStyle = "#EBE8E0";
   ctx.fillRect(0, 0, w, h);
 
   // subtle grid texture feel — horizontal rules
-  ctx.strokeStyle = "rgba(196,185,162,0.04)";
+  ctx.strokeStyle = "rgba(59,48,38,0.05)";
   ctx.lineWidth = 1;
   for (let y = 0; y < h; y += 40) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
@@ -81,14 +81,14 @@ function drawBackground(w, h) {
 }
 
 function drawAxisLine(w, h) {
-  const y = h * 0.62;
-  ctx.strokeStyle = "#706858";
+  const y = h * 0.15;
+  ctx.strokeStyle = "#A89D88";
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
 }
 
 function drawTicks(w, h) {
-  const axisY = h * 0.62;
+  const axisY = h * 0.15;
 
   if (zoomLevel === 0) {
     // Draw 4 day markers
@@ -181,7 +181,7 @@ function loadImg(url) {
 }
 
 function drawPhotos(w, h) {
-  const axisY = h * 0.62;
+  const axisY = h * 0.4;
   const photoH = zoomLevel === 0 ? 180 : zoomLevel === 1 ? 120 : 80;
   const photoW = photoH * (4 / 3);
   const gap = 4;
@@ -216,7 +216,7 @@ function drawPhotos(w, h) {
 
     toShow.forEach(({ p, x, globalIdx }, stackIdx) => {
       const drawX = x - photoW / 2 + stackIdx * (zoomLevel === 2 ? 0 : 6);
-      const drawY = axisY - photoH - 20 - stackIdx * (zoomLevel === 2 ? 0 : 4);
+      const drawY = axisY - photoH - 60 - stackIdx * (zoomLevel === 2 ? 0 : 4);
 
       // Connector line
       ctx.strokeStyle = "#E86A3A";

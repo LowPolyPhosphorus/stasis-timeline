@@ -58,6 +58,12 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
     last = h;
   }
 
+  // DEBUG — save screenshot and HTML to inspect what Google is showing
+  await page.screenshot({ path: path.join(__dirname, "../data/debug.png"), fullPage: false });
+  const html = await page.content();
+  fs.writeFileSync(path.join(__dirname, "../data/debug.html"), html);
+  console.log("Debug files written.");
+
   // Extract from rendered DOM — Google renders img tags with data attributes
   console.log("Extracting from DOM...");
   const domPhotos = await page.evaluate(() => {

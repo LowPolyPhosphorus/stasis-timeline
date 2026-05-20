@@ -39,8 +39,8 @@ function resize() {
 function getW() { return canvas.offsetWidth; }
 function getH() { return canvas.offsetHeight; }
 
-const START = new Date("2025-05-15T00:00:00");
-const END   = new Date("2025-05-18T23:59:59");
+const START = new Date("2026-05-15T00:00:00");
+const END   = new Date("2026-05-18T23:59:59");
 const TOTAL_MS = END - START;
 
 function msToX(ms) {
@@ -93,7 +93,7 @@ function drawTicks(w, h) {
 
   if (zoomLevel === 0) {
     DAY_DATES.forEach((day, i) => {
-      const ms = new Date(`2025-05-${String(day).padStart(2,"0")}T12:00:00`) - START;
+      const ms = new Date(`2026-05-${String(day).padStart(2,"0")}T12:00:00`) - START;
       const x = msToX(ms);
       if (x < -100 || x > w + 100) return;
 

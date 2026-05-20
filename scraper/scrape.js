@@ -84,6 +84,15 @@ const OUT_PATH = path.join(__dirname, "../data/photos.json");
     return photos;
   });
 
+  const pageInfo = await page.evaluate(() => {
+    const imgs = document.querySelectorAll("img").length;
+    const lh3imgs = document.querySelectorAll("img[src*='lh3']").length;
+    const bodyLen = document.body.innerHTML.length;
+    const sample = document.body.innerHTML.slice(0, 2000);
+    return { imgs, lh3imgs, bodyLen, sample };
+  });
+  console.log("Page info:", JSON.stringify(pageInfo, null, 2));
+
   await browser.close();
 
   const photos = [];

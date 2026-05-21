@@ -177,6 +177,11 @@ function loadImg(url) {
 function drawPhotos(w, h) {
   const ay = axisY();
 
+  // Clear stale hit boxes from previous renders — otherwise photos
+  // that scrolled out of view leave behind ghost hit regions, causing
+  // the wrong photo to open in the lightbox when clicking where they used to be.
+  allPhotos.forEach((p) => { p._hitX = undefined; });
+
   // Photo sizes — uniform height, variable width to maintain aspect ratio
   const photoH = zoomLevel === 0 ? 160 : zoomLevel === 1 ? 100 : 64;
   const gap = 8;

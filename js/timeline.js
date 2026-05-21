@@ -177,11 +177,11 @@ function loadImg(url) {
 function drawPhotos(w, h) {
   const ay = axisY();
 
-  // Photo sizes — slightly smaller to reduce cramping
+  // Photo sizes — uniform height, variable width to maintain aspect ratio
   const photoH = zoomLevel === 0 ? 160 : zoomLevel === 1 ? 100 : 64;
-  const photoW = photoH * (4 / 3);
   const gap = 8;
-  const bucketSize = photoW + gap;
+  const avgPhotoW = photoH * (4 / 3);
+  const bucketSize = avgPhotoW + gap;
 
   const slots = new Map();
 
@@ -194,7 +194,7 @@ function drawPhotos(w, h) {
 
   visiblePhotos.forEach((p, globalIdx) => {
     const x = msToX(photoMs(p));
-    if (x < -photoW || x > w + photoW) return;
+    if (x < -avgPhotoW || x > w + avgPhotoW) return;
     const bucket = Math.floor(x / bucketSize);
     if (!slots.has(bucket)) slots.set(bucket, []);
     slots.get(bucket).push({ p, x, globalIdx });
@@ -207,6 +207,14 @@ function drawPhotos(w, h) {
     const hidden = group.length - toShow.length;
 
     toShow.forEach(({ p, x, globalIdx }, stackIdx) => {
+      const img = loadImg(p.thumb);
+
+      // Calculate actual width based on image's natural aspect ratio
+      let photoW = photoH * (4 / 3);
+      if (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        photoW = photoH * (img.naturalWidth / img.naturalHeight);
+      }
+
       const drawX = x - photoW / 2 + stackIdx * 5;
       // Photos hang above axis, centered vertically in upper half
       const drawY = ay - photoH - 24 - stackIdx * 3;
@@ -222,7 +230,6 @@ function drawPhotos(w, h) {
       ctx.setLineDash([]);
 
       // Photo
-      const img = loadImg(p.thumb);
       ctx.save();
       ctx.beginPath();
       ctx.rect(drawX, drawY, photoW, photoH);

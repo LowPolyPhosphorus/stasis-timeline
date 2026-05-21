@@ -51,7 +51,7 @@ function totalWidth() {
   const base = getW();
   if (zoomLevel === 0) return base;
   if (zoomLevel === 1) return base * 6;
-  return base * 24;
+  return base * 48;
 }
 
 function photoMs(p) {
